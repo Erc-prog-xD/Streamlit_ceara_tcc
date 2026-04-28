@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { margin: 0; background: white; font-family: sans-serif; }
+        .municipio { stroke: #fff; stroke-width: 0.5px; }
+        .municipio:hover { stroke: #000; stroke-width: 1.5px; fill: #ffcc00 !important; cursor: pointer; }
+        .tooltip {
+            position: absolute; background: white; padding: 5px;
+            border: 1px solid #ccc; display: none; pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="tooltip" class="tooltip"></div>
+    <div id="map"></div>
+
+    <script>
+        // O Python vai preencher estas variáveis
+        const dataFromStreamlit = {}; 
+        const geojson = {}; 
+
+        const width = 800;
+        const height = 600;
+
+        const svg = d3.select("#map").append("svg")
+            .attr("width", "100%").attr("height", height)
+            .attr("viewBox", `0 0 ${width} ${height}`);
+
+        const projection = d3.geoMercator().fitSize([width, height], geojson);
+        const path = d3.geoPath().projection(projection);
+
+        const colorScale = d3.scaleSequential(d3.interpolateBlues)
+            .domain([0, d3.max(Object.values(dataFromStreamlit)) || 10]);
+
+        svg.selectAll("path")
+            .data(geojson.features)
+            .enter().append("path")
+            .attr("class", "municipio")
+            .attr("d", path)
+            .attr("fill", d => {
+                const val = dataFromStreamlit[d.properties.name] || 0;
+                return val > 0 ? colorScale(val) : "#efefef";
+            })
+            .on("mouseover", (event, d) => {
+                d3.select("#tooltip").style("display", "block")
+                    .html(`<b>${d.properties.name}</b><br>Valor: ${dataFromStreamlit[d.properties.name] || 0}`)
+                    .style("left", (event.pageX + 10) + "px")
+                    .style("top", (event.pageY - 10) + "px");
+            })
+            .on("mouseout", () => d3.select("#tooltip").style("display", "none"));
+    </script>
+</body>
+</html>
