@@ -11,12 +11,22 @@ st.title("Mapa Interativo do Ceará")
 PATH_GEOJSON = "app/components/ceara.geojson.json"
 PATH_HTML = "app/components/mapa_d3.html"
 PATH_CSV = "data/contratos_ceara_limpo.csv"
+PATH_POPULATION = "api/api/populacao_ceara_ibge_2022.json"
 
 with open(PATH_GEOJSON, "r", encoding="utf-8") as f:
     ceara_geo = json.load(f)
 
 with open(PATH_HTML, "r", encoding="utf-8") as f:
     html_template = f.read()
+
+with open(PATH_POPULATION, "r", encoding="utf-8") as f:
+    population = json.load(f)
+
+population_por_codigo = {
+    item["codigo_ibge"]: item
+    for item in population.values()
+}
+
 
 df = pd.read_csv(PATH_CSV)
 
@@ -50,6 +60,9 @@ html_final = html_template.replace(
 ).replace(
     "const geojson = {};",
     f"const geojson = {json.dumps(ceara_geo, ensure_ascii=False)};"
+).replace(
+    "const populacaoFromIBGE = {};",
+    f"const populacaoFromIBGE = {json.dumps(population_por_codigo, ensure_ascii=False)};"
 )
 
 b64_html = base64.b64encode(html_final.encode("utf-8")).decode("utf-8")

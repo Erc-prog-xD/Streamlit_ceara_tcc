@@ -321,7 +321,7 @@
         <div id="map-card">
             <div id="map-header">
                 <h1>Mapa Interativo do Ceará</h1>
-                <p>Clique em um município para ver o resumo estatístico dos contratos.</p>
+                <p>Clique em um município para ver o resumo estatístico dos contratos e a população.</p>
             </div>
 
             <div id="map"></div>
@@ -341,7 +341,7 @@
                 <div>
                     <div class="icon">📍</div>
                     <h2>Informações</h2>
-                    <p>Clique em um município no mapa para visualizar o <strong>describe()</strong> dos contratos.</p>
+                    <p>Clique em um município no mapa para visualizar o <strong>describe()</strong> dos contratos e o número de habitantes.</p>
                 </div>
             </div>
         </div>
@@ -352,6 +352,7 @@
     <script>
         const dataFromStreamlit = {};
         const describeFromStreamlit = {};
+        const populacaoFromIBGE = {};
         const geojson = {};
 
         let selectedMunicipio = null;
@@ -372,10 +373,42 @@
             });
         }
 
+        function formatInteger(value) {
+            const number = Number(value || 0);
+            return number.toLocaleString('pt-BR', {
+                maximumFractionDigits: 0
+            });
+        }
+
+        function getPopulacaoByFeature(feature) {
+            const codigo = String(feature?.properties?.id || "");
+
+            if (!codigo) return null;
+
+            const dados = populacaoFromIBGE[codigo];
+
+            if (!dados) return null;
+
+            return dados.populacao;
+        }
+
+        function getPopulacaoByMunicipio(nomeMunicipio) {
+            const feature = geojson.features?.find(
+                item => item.properties.name === nomeMunicipio
+            );
+
+            return getPopulacaoByFeature(feature);
+        }
+
         function updateInfoPanel(nomeMunicipio) {
             const panel = d3.select("#info-panel");
             const info = describeFromStreamlit[nomeMunicipio];
             const total = dataFromStreamlit[nomeMunicipio] || 0;
+            const populacao = getPopulacaoByMunicipio(nomeMunicipio);
+
+            const populacaoTexto = populacao
+                ? `${formatInteger(populacao)} habitantes`
+                : 'População não encontrada';
 
             if (!info) {
                 panel.html(`
@@ -387,8 +420,15 @@
                     <p>Não há dados de contratos para este município.</p>
 
                     <div class="total-card">
-                        <div class="label">Total contratado</div>
-                        <div class="value">${formatCurrency(total)}</div>
+                        <div class="label">População IBGE</div>
+                        <div class="value">${populacaoTexto}</div>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-row">
+                            <span class="stat-label">Total contratado</span>
+                            <span class="stat-value">${formatCurrency(total)}</span>
+                        </div>
                     </div>
                 `);
                 return;
@@ -408,6 +448,10 @@
                 </div>
 
                 <div class="stats-grid">
+                    <div class="stat-row">
+                        <span class="stat-label">População IBGE </span>
+                        <span class="stat-value">${populacaoTexto}</span>
+                    </div>
                     <div class="stat-row">
                         <span class="stat-label">Quantidade</span>
                         <span class="stat-value">${formatNumber(info.count)}</span>
@@ -494,10 +538,13 @@
                     const nome = d.properties.name;
                     const val = dataFromStreamlit[nome] || 0;
                     const info = describeFromStreamlit[nome];
+                    const populacao = getPopulacaoByFeature(d);
+                    const populacaoTexto = populacao ? formatInteger(populacao) : 'Não encontrada';
 
                     tooltip.style("display", "block")
                         .html(`
                             <strong>${nome}</strong>
+                            População IBGE: ${populacaoTexto}<br/>
                             Total: ${formatCurrency(val)}<br/>
                             ${info ? `Contratos: ${formatNumber(info.count)}` : 'Sem dados'}
                         `);
