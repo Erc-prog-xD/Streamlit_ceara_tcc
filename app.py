@@ -4,8 +4,6 @@ import json
 import base64
 import os
 
-st.write("Diretório atual:", os.getcwd())
-st.write("Arquivos na pasta atual:", os.listdir())
 
 st.set_page_config(layout="wide")
 st.title("Mapa Interativo do Ceará")
