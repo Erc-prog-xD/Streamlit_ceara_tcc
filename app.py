@@ -10,8 +10,8 @@ st.title("Mapa Interativo do Ceará")
 
 PATH_GEOJSON = "app/components/ceara.geojson.json"
 PATH_HTML = "app/components/mapa_d3.html"
-PATH_CSV = "data/contratos_ceara_limpo.csv"
-PATH_POPULATION = "api/api/populacao_ceara_ibge_2022.json"
+PATH_POPULATION = "data/ibge_csv/populacao_ceara_ibge_2022.json"
+PATH_CSV_CATEGORIAS = "data/contratos_classificados_final.csv"
 
 with open(PATH_GEOJSON, "r", encoding="utf-8") as f:
     ceara_geo = json.load(f)
@@ -28,7 +28,7 @@ population_por_codigo = {
 }
 
 
-df = pd.read_csv(PATH_CSV)
+df = pd.read_csv(PATH_CSV_CATEGORIAS)
 
 # Garante que valorGlobal seja numérico
 df["valorGlobal"] = pd.to_numeric(df["valorGlobal"], errors="coerce")
